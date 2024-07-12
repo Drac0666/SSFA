@@ -1,30 +1,21 @@
-from pdfminer.high_level import extract_pages
-from pdfminer.layout import LTTextContainer, LTChar, LTTextBoxHorizontal
+import PyPDF2
 
-def find_text_in_pdf(pdf_path, search_text):
-    # Initialize a list to hold the results
-    results = []
+def find_sentence_in_pdf(pdf_path, sentence):
+    # Open the PDF file
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        # Iterate over each page
+        for page_num in range(len(reader.pages)):
+            page = reader.pages[page_num]
+            page_text = page.extract_text()
+            # Check if the sentence is in the text of the page
+            if sentence in page_text:
+                print(f"Sentence found on page {page_num + 1}")
+                return page_num + 1
+    print("Sentence not found in the PDF.")
+    return None
 
-    # Iterate through each page
-    for page_num, page_layout in enumerate(extract_pages(pdf_path), start=1):
-        for element in page_layout:
-            if isinstance(element, LTTextBoxHorizontal):
-                for text_line in element:
-                    if isinstance(text_line, LTTextContainer):
-                        text = text_line.get_text()
-                        if search_text in text:
-                            # Record the page number and the line of text
-                            results.append((page_num, text.strip()))
-
-    return results
-
-# Usage example
-pdf_path = 'example.pdf'
-search_text = 'specific text'
-matches = find_text_in_pdf(pdf_path, search_text)
-
-if matches:
-    for page_num, text in matches:
-        print(f"Found '{search_text}' on page {page_num}: {text}")
-else:
-    print(f"'{search_text}' not found in the document.")
+# Example usage
+pdf_path = 'your_pdf_file.pdf'
+sentence = 'The specific sentence you are looking for.'
+find_sentence_in_pdf(pdf_path, sentence)
