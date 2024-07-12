@@ -1,25 +1,22 @@
-import io
-from pdfminer.high_level import extract_text_to_fp
-from pdfminer.layout import LAParams
+from pdfminer.high_level import extract_pages
+from pdfminer.layout import LTTextContainer, LTChar, LTTextBoxHorizontal
 
 def find_text_in_pdf(pdf_path, search_text):
-    # Create a PDF resource manager object that stores shared resources
-    laparams = LAParams()
-    
-    # Extract text from PDF
-    with open(pdf_path, 'rb') as pdf_file:
-        output_string = io.StringIO()
-        extract_text_to_fp(pdf_file, output_string, laparams=laparams, output_type='text')
-        text = output_string.getvalue()
-    
-    # Find the text in the extracted content
-    occurrences = []
-    lines = text.split('\n')
-    for line_num, line in enumerate(lines, start=1):
-        if search_text in line:
-            occurrences.append((line_num, line))
-    
-    return occurrences
+    # Initialize a list to hold the results
+    results = []
+
+    # Iterate through each page
+    for page_num, page_layout in enumerate(extract_pages(pdf_path), start=1):
+        for element in page_layout:
+            if isinstance(element, LTTextBoxHorizontal):
+                for text_line in element:
+                    if isinstance(text_line, LTTextContainer):
+                        text = text_line.get_text()
+                        if search_text in text:
+                            # Record the page number and the line of text
+                            results.append((page_num, text.strip()))
+
+    return results
 
 # Usage example
 pdf_path = 'example.pdf'
@@ -27,7 +24,7 @@ search_text = 'specific text'
 matches = find_text_in_pdf(pdf_path, search_text)
 
 if matches:
-    for line_num, line in matches:
-        print(f"Found '{search_text}' on line {line_num}: {line}")
+    for page_num, text in matches:
+        print(f"Found '{search_text}' on page {page_num}: {text}")
 else:
     print(f"'{search_text}' not found in the document.")
