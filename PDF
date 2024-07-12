@@ -1,21 +1,31 @@
-import PyPDF2
+import pytesseract
+from pdf2image import convert_from_path
+import os
 
-def find_sentence_in_pdf(pdf_path, sentence):
-    # Open the PDF file
-    with open(pdf_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
-        # Iterate over each page
-        for page_num in range(len(reader.pages)):
-            page = reader.pages[page_num]
-            page_text = page.extract_text()
-            # Check if the sentence is in the text of the page
-            if sentence in page_text:
-                print(f"Sentence found on page {page_num + 1}")
-                return page_num + 1
+def find_sentence_in_pdf(pdf_path, sentence, tesseract_cmd=None):
+    if tesseract_cmd:
+        pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+    
+    # Convert PDF pages to images
+    pages = convert_from_path(pdf_path)
+    
+    # Iterate over each page image
+    for page_num, page in enumerate(pages):
+        # Use Tesseract to do OCR on the page
+        text = pytesseract.image_to_string(page)
+        
+        # Check if the sentence is in the text of the page
+        if sentence in text:
+            print(f"Sentence found on page {page_num + 1}")
+            return page_num + 1
+    
     print("Sentence not found in the PDF.")
     return None
 
 # Example usage
 pdf_path = 'your_pdf_file.pdf'
 sentence = 'The specific sentence you are looking for.'
-find_sentence_in_pdf(pdf_path, sentence)
+# Set tesseract_cmd if Tesseract is not in your PATH
+# tesseract_cmd = '/usr/local/bin/tesseract' 
+tesseract_cmd = None 
+find_sentence_in_pdf(pdf_path, sentence, tesseract_cmd)
