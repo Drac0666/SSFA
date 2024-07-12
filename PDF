@@ -1,0 +1,33 @@
+import io
+from pdfminer.high_level import extract_text_to_fp
+from pdfminer.layout import LAParams
+
+def find_text_in_pdf(pdf_path, search_text):
+    # Create a PDF resource manager object that stores shared resources
+    laparams = LAParams()
+    
+    # Extract text from PDF
+    with open(pdf_path, 'rb') as pdf_file:
+        output_string = io.StringIO()
+        extract_text_to_fp(pdf_file, output_string, laparams=laparams, output_type='text')
+        text = output_string.getvalue()
+    
+    # Find the text in the extracted content
+    occurrences = []
+    lines = text.split('\n')
+    for line_num, line in enumerate(lines, start=1):
+        if search_text in line:
+            occurrences.append((line_num, line))
+    
+    return occurrences
+
+# Usage example
+pdf_path = 'example.pdf'
+search_text = 'specific text'
+matches = find_text_in_pdf(pdf_path, search_text)
+
+if matches:
+    for line_num, line in matches:
+        print(f"Found '{search_text}' on line {line_num}: {line}")
+else:
+    print(f"'{search_text}' not found in the document.")
